@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SonikTunez - Music App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== RESET & BASE ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0; 
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+      height: 100%;
+      background-color: #121212;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+    }
+    svg {
+      margin-top: 30px; 
+      margin-left: 10px; 
+      transition: transform 0.3s ease;
+    }
+    svg:hover {
+      transform: scale(1.05);
+    }
+
+    /* ===== LAYOUT ===== */
+    .app {
+      display: flex;
+      height: 100vh;
+      flex-direction: row;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 220px;
+      background-color: #000;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      position: relative;
+      z-index: 100;
+    }
+    .sidebar .logo {
+      font-size: 1.7rem;
+      font-weight: 600;
+      color: #1db954;
+      margin-bottom: 20px;
+      user-select: none;
+      letter-spacing: 1.5px;
+      font-family: 'Orbitron', sans-serif;
+      text-shadow: 0 0 10px rgba(29, 185, 84, 0.3);
+    }
+    .sidebar nav a {
+      display: block;
+      color: #b3b3b3;
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 15px;
+      padding-left: 10px;
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .sidebar nav a:hover, 
+    .sidebar nav a.active {
+      color: #fff;
+      border-left-color: #1db954;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #181818;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      padding: 20px 30px;
+      background-color: #121212;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #282828;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    #searchBar {
+      width: 280px;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      background-color: #282828;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.3s;
+      margin-left: 20px;
+    }
+    #searchBar::placeholder {
+      color: #b3b3b3;
+    }
+    #searchBar:focus {
+      background-color: #3e3e3e;
+      box-shadow: 0 0 0 2px #1db954;
+    }
+
+    /* ===== CONTENT AREA ===== */
+    .content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    /* ===== SONG LIST ===== */
+    .song-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
+    }
+    .song-card {
+      background: #282828;
+      border-radius: 8px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .song-card:hover {
+      background-color: #1db954;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    .song-card:hover .song-artist {
+      color: rgba(0, 0, 0, 0.7);
+    }
+    .song-card img {
+      width: 140px;
+      height: 140px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease;
+    }
+    .song-card:hover img {
+      transform: scale(1.05);
+    }
+    .song-title {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    .song-artist {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #b3b3b3;
+      transition: color 0.3s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    /* ===== PLAYER ===== */
+    #player {
+      position: fixed;
+      bottom: 0;
+      left: 220px;
+      right: 0;
+      height: 90px;
+      background-color: #181818;
+      border-top: 1px solid #282828;
+      display: flex;
+      align-items: center;
+      padding: 0 30px;
+      gap: 20px;
+      z-index: 1000;
+      cursor: pointer;
+      transition: all 0.3s ease;
+	  margin-left: 50px;
+    }
+    #player:hover {
+      background-color: #222;
+    }
+    #coverArt {
+      width: 60px;
+      height: 60px;
+      border-radius: 4px;
+      object-fit: cover;
+      box-shadow: 0 0 10px rgba(29, 185, 84, 0.7);
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+    #player:hover #coverArt {
+      transform: scale(1.05);
+    }
+    #songInfo {
+      flex: 1;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+      padding-left: 10px;
+      min-width: 0;
+    }
+    #songTitle {
+      font-weight: 700;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #artist {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #b3b3b3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== CONTROLS ===== */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+      flex-shrink: 0;
+    }
+
+    .controls button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .controls button:hover {
+      color: #1db954;
+      transform: scale(1.15);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .controls button:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    #progressBar {
+      width: 200px;
+      cursor: pointer;
+      accent-color: #007bff;
+      margin-left: 10px;
+      transition: opacity 0.2s;
+    }
+    #progressBar:hover {
+      opacity: 0.9;
+    }
+
+    /* ===== VOLUME ===== */
+    #volumeControl {
+      width: 80px;
+      cursor: pointer;
+      accent-color: #1db954;
+      transition: all 0.2s;
+    }
+    #volumeControl:hover {
+      accent-color: #17a84b;
+    }
+
+    /* ===== TIME DISPLAY ===== */
+    #timeDisplay {
+      color: white;
+      font-size: 0.9rem;
+      width: 200px;
+      text-align: center;
+      user-select: none;
+      margin: 0 10px;
+    }
+
+    /* ===== FULL PLAYER OVERLAY ===== */
+    #fullPlayerOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(18, 18, 18, 0.95);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      padding: 40px 20px;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    #fullPlayerOverlay.active {
+      display: flex;
+      opacity: 1;
+    }
+    #fullPlayerContent {
+      max-width: 600px;
+      width: 100%;
+      background: #181818;
+      border-radius: 12px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 0 30px rgba(29, 185, 84, 0.7);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+    #fullPlayerOverlay.active #fullPlayerContent {
+      transform: translateY(0);
+    }
+    #fullPlayerCoverArt {
+      width: 300px;
+      height: 300px;
+      border-radius: 12px;
+      object-fit: cover;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 20px rgba(29, 185, 84, 0.8);
+      transition: transform 0.3s ease;
+    }
+    #fullPlayerCoverArt:hover {
+      transform: scale(1.02);
+    }
+    #fullPlayerSongTitle {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-align: center;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #fullPlayerArtist {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #b3b3b3;
+      margin-bottom: 25px;
+      text-align: center;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #fullPlayerControls {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    #fullPlayerControls button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 48px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    #fullPlayerControls button:hover {
+      color: #1db954;
+      transform: scale(1.2);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    #fullPlayerControls button:active {
+      transform: scale(0.95);
+    }
+    #fullPlayerProgressBar {
+      width: 100%;
+      cursor: pointer;
+      accent-color: #007bff;
+      margin-bottom: 15px;
+      height: 6px;
+      transition: all 0.2s;
+    }
+    #fullPlayerProgressBar:hover {
+      height: 8px;
+    }
+    #fullPlayerVolumeControl {
+      width: 150px;
+      cursor: pointer;
+      accent-color: #1db954;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+    #fullPlayerVolumeControl:hover {
+      accent-color: #17a84b;
+    }
+    #fullPlayerTimeDisplay {
+      width: 100%;
+      text-align: center;
+      font-size: 1rem;
+      color: #b3b3b3;
+      user-select: none;
+      margin-bottom: 15px;
+    }
+    #closeFullPlayerBtn {
+      align-self: flex-end;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    #closeFullPlayerBtn:hover {
+      color: #1db954;
+      transform: scale(1.15);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ===== AUTH MODAL ===== */
+    #authModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    #authModal.active {
+      display: flex;
+      opacity: 1;
+    }
+    #authModalContent {
+      background: #181818;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      padding: 30px 25px;
+      box-shadow: 0 0 30px rgba(29, 185, 84, 0.7);
+      color: #1db954;
+      position: relative;
+      font-family: 'Montserrat', sans-serif;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+    #authModal.active #authModalContent {
+      transform: translateY(0);
+    }
+    #authModalContent h2 {
+      color: #1db954;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+    #authModalContent .closeBtn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    #authModalContent .closeBtn:hover {
+      color: #1db954;
+      transform: scale(1.15);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    #authModalContent form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    #authModalContent label {
+      font-weight: 600;
+      color: #b3b3b3;
+      margin-bottom: 6px;
+      display: block;
+    }
+    #authModalContent input {
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #282828;
+      color: #fff;
+      font-size: 1rem;
+      width: 100%;
+      transition: all 0.3s;
+    }
+    #authModalContent input:focus {
+      border-color: #1db954;
+      box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.3);
+      outline: none;
+    }
+    #authModalContent button.submitBtn {
+      background: #1db954;
+      border: none;
+      color: #fff;
+      padding: 12px 25px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      user-select: none;
+      margin-top: 10px;
+      width: 100%;
+    }
+    #authModalContent button.submitBtn:hover {
+      background: #17a84b;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(29, 185, 84, 0.4);
+    }
+    #authModalContent button.submitBtn:active {
+      transform: translateY(0);
+    }
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .auth-buttons button {
+      background: #1db954;
+      border: none;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+    }
+    .auth-buttons button:hover {
+      background: #17a84b;
+      transform: scale(1.05);
+    }
+    #authModalContent .toggle-link {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #b3b3b3;
+    }
+    #authModalContent .toggle-link a {
+      color: #1db954;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    #authModalContent .toggle-link a:hover {
+      text-decoration: underline;
+    }
+    .form-error {
+      color: #ff4d4d;
+      font-size: 0.8rem;
+      margin-top: 5px;
+      display: none;
+    }
+    .input-error {
+      border-color: #ff4d4d !important;
+    }
+
+    /* ===== LOADING STATES ===== */
+    .loading {
+      position: relative;
+      overflow: hidden;
+    }
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: loading 1.5s infinite;
+    }
+    @keyframes loading {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 768px) {
+      .app {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        padding: 15px;
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+      }
+      .sidebar .logo {
+        margin-bottom: 0;
+        font-size: 1.5rem;
+      }
+      .sidebar nav {
+        display: flex;
+        gap: 15px;
+      }
+      .sidebar nav a {
+        margin-bottom: 0;
+        padding-left: 0;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+      }
+      .sidebar nav a:hover, 
+      .sidebar nav a.active {
+        border-left: none;
+        border-bottom-color: #1db954;
+      }
+      #player {
+        left: 0;
+        padding: 0 15px;
+        height: 80px;
+      }
+      #coverArt {
+        width: 50px;
+        height: 50px;
+      }
+      .controls button {
+        font-size: 24px;
+      }
+      #progressBar {
+        width: 120px;
+      }
+      #timeDisplay {
+        display: none;
+      }
+      #volumeControl {
+        width: 60px;
+      }
+      header {
+        padding: 15px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+      }
+      #searchBar {
+        width: 100%;
+        margin-left: 0;
+      }
+      .auth-buttons {
+        width: 100%;
+      }
+      .song-list {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+      .song-card img {
+        width: 100px;
+        height: 100px;
+      }
+      #fullPlayerContent {
+        padding: 20px;
+      }
+      #fullPlayerCoverArt {
+        width: 200px;
+        height: 200px;
+      }
+      #fullPlayerSongTitle {
+        font-size: 1.5rem;
+      }
+      #fullPlayerArtist {
+        font-size: 1rem;
+      }
+      #fullPlayerControls button {
+        font-size: 36px;
+      }
+      #fullPlayerProgressBar {
+        width: 90%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .sidebar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .sidebar nav {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .song-list {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+      }
+      .song-card img {
+        width: 80px;
+        height: 80px;
+      }
+      #fullPlayerCoverArt {
+        width: 150px;
+        height: 150px;
+      }
+      #fullPlayerControls {
+        gap: 20px;
+      }
+      #fullPlayerControls button {
+        font-size: 28px;
+        width: 50px;
+        height: 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="90" height="90" rx="15" ry="15" fill="#1db954" />
+      <path d="M55 25 Q50 30 50 40 Q50 48 40 48 Q35 48 32 51 Q28 55 30 60 Q32 65 38 66 Q44 67 47 63 Q50 60 50 55 Q50 50 55 48 Q60 45 60 40 Q60 35 65 30 L55 25 Z" fill="white" />
+    </svg>
+    <aside class="sidebar">
+      <div class="logo">SonikTunez</div>
+      <nav>
+        <a href="#" class="active">Home</a>
+        <a href="#">Search</a>
+        <a href="#">Your Library</a>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <header>
+        <input type="text" id="searchBar" placeholder="Search for songs, artists..." aria-label="Search songs" />
+        <div class="auth-buttons">
+          <button id="openLoginBtn">Login</button>
+          <button id="openRegisterBtn">Sign Up</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="song-list" id="allSongsContainer">
+          <!-- Songs populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini player fixed bottom -->
+  <section id="player" aria-label="Music player" title="Click to open full player">
+    <img id="coverArt" src="https://via.placeholder.com/60" alt="Album Cover" />
+    <div id="songInfo">
+      <div id="songTitle">Song Title</div>
+      <div id="artist">Artist Name</div>
+    </div>
+    <div class="controls">
+      <button onclick="prevSong(event)" aria-label="Previous song">⏮</button>
+      <button onclick="togglePlay(event)" id="playBtn" aria-label="Play/pause">▶</button>
+      <button onclick="nextSong(event)" aria-label="Next song">⏭</button>
+    </div>
+    <input type="range" id="progressBar" min="0" max="100" value="0" aria-label="Song progress" />
+    <div id="timeDisplay">
+      <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+    </div>
+    <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.5" aria-label="Volume control" />
+    <audio id="audio" aria-hidden="true"></audio>
+  </section>
+
+  <!-- Full page player overlay -->
+  <div id="fullPlayerOverlay" role="dialog" aria-modal="true" aria-label="Full Music Player">
+    <div id="fullPlayerContent">
+      <button id="closeFullPlayerBtn" aria-label="Close full player">✕</button>
+      <img id="fullPlayerCoverArt" src="https://via.placeholder.com/300" alt="Album Cover" />
+      <div id="fullPlayerSongTitle">Song Title</div>
+      <div id="fullPlayerArtist">Artist Name</div>
+      <div id="fullPlayerControls">
+        <button onclick="prevSong()" aria-label="Previous song">⏮</button>
+        <button onclick="togglePlay()" id="fullPlayBtn" aria-label="Play/pause">▶</button>
+        <button onclick="nextSong()" aria-label="Next song">⏭</button>
+      </div>
+      <input type="range" id="fullPlayerProgressBar" min="0" max="100" value="0" aria-label="Song progress" />
+      <div id="fullPlayerTimeDisplay">
+        <span id="fullCurrentTime">0:00</span> / <span id="fullDuration">0:00</span>
+      </div>
+      <input type="range" id="fullPlayerVolumeControl" min="0" max="1" step="0.01" value="0.5" aria-label="Volume control" />
+    </div>
+  </div>
+  
+  <!-- AUTH MODAL -->
+  <div id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div id="authModalContent">
+      <button class="closeBtn" aria-label="Close authentication modal">✕</button>
+
+      <!-- LOGIN FORM (shown by default) -->
+      <form id="loginForm">
+        <h2 id="authTitle">Login</h2>
+
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required placeholder="Enter your email" />
+        <div class="form-error" id="loginEmailError">Please enter a valid email</div>
+
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required placeholder="Enter your password" />
+        <div class="form-error" id="loginPasswordError">Password must be at least 6 characters</div>
+
+        <button type="submit" class="submitBtn">Login</button>
+
+        <div class="toggle-link">
+          Don't have an account? <a href="#" id="showRegister">Sign Up</a>
+        </div>
+      </form>
+
+      <!-- REGISTER FORM (hidden by default) -->
+      <form id="registerForm" style="display: none;">
+        <h2>Sign Up</h2>
+
+        <label for="registerName">Name</label>
+        <input type="text" id="registerName" required placeholder="Enter your name" />
+        <div class="form-error" id="registerNameError">Please enter your name</div>
+
+        <label for="registerEmail">Email</label>
+        <input type="email" id="registerEmail" required placeholder="Enter your email" />
+        <div class="form-error" id="registerEmailError">Please enter a valid email</div>
+
+        <label for="registerPassword">Password</label>
+        <input type="password" id="registerPassword" required placeholder="Enter your password" />
+        <div class="form-error" id="registerPasswordError">Password must be at least 6 characters</div>
+
+        <label for="registerConfirm">Confirm Password</label>
+        <input type="password" id="registerConfirm" required placeholder="Confirm your password" />
+        <div class="form-error" id="registerConfirmError">Passwords do not match</div>
+
+        <button type="submit" class="submitBtn">Sign Up</button>
+
+        <div class="toggle-link">
+          Already have an account? <a href="#" id="showLogin">Login</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ===== AUTH MODAL FUNCTIONALITY =====
+    const authModal = document.getElementById('authModal');
+    const authModalContent = document.getElementById('authModalContent');
+    const openLoginBtn = document.getElementById('openLoginBtn');
+    const openRegisterBtn = document.getElementById('openRegisterBtn');
+    const closeAuthBtn = authModal.querySelector('.closeBtn');
+
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const showRegisterLink = document.getElementById('showRegister');
+    const showLoginLink = document.getElementById('showLogin');
+
+    // Form validation flags
+    let isLoginValid = false;
+    let isRegisterValid = false;
+
+    // Open modal with login form
+    openLoginBtn.addEventListener('click', () => {
+      authModal.classList.add('active');
+      loginForm.style.display = 'flex';
+      registerForm.style.display = 'none';
+      document.body.style.overflow = 'hidden';
+    });
+
+    // Open modal with register form
+    openRegisterBtn.addEventListener('click', () => {
+      authModal.classList.add('active');
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    });
+
+    // Switch to register form
+    showRegisterLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'flex';
+    });
+
+    // Switch to login form
+    showLoginLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      registerForm.style.display = 'none';
+      loginForm.style.display = 'flex';
+    });
+
+    // Close modal
+    closeAuthBtn.addEventListener('click', () => {
+      authModal.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+
+    // Click outside to close
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) {
+        authModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Login form validation
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      // Simple validation
+      if (!email.includes('@') || !email.includes('.')) {
+        document.getElementById('loginEmailError').style.display = 'block';
+        document.getElementById('loginEmail').classList.add('input-error');
+        isLoginValid = false;
+      } else {
+        document.getElementById('loginEmailError').style.display = 'none';
+        document.getElementById('loginEmail').classList.remove('input-error');
+        isLoginValid = true;
+      }
+      
+      if (password.length < 6) {
+        document.getElementById('loginPasswordError').style.display = 'block';
+        document.getElementById('loginPassword').classList.add('input-error');
+        isLoginValid = false;
+      } else {
+        document.getElementById('loginPasswordError').style.display = 'none';
+        document.getElementById('loginPassword').classList.remove('input-error');
+        isLoginValid = true;
+      }
+      
+      if (isLoginValid) {
+        // Here you would typically send data to server
+        alert('Login successful! (This is a demo)');
+        authModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Register form validation
+    registerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('registerName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirm = document.getElementById('registerConfirm').value;
+      
+      // Reset all errors
+      document.querySelectorAll('#registerForm .form-error').forEach(el => {
+        el.style.display = 'none';
+      });
+      document.querySelectorAll('#registerForm input').forEach(el => {
+        el.classList.remove('input-error');
+      });
+      
+      isRegisterValid = true;
+      
+      // Validate name
+      if (name.trim() === '') {
+        document.getElementById('registerNameError').style.display = 'block';
+        document.getElementById('registerName').classList.add('input-error');
+        isRegisterValid = false;
+      }
+      
+      // Validate email
+      if (!email.includes('@') || !email.includes('.')) {
+        document.getElementById('registerEmailError').style.display = 'block';
+        document.getElementById('registerEmail').classList.add('input-error');
+        isRegisterValid = false;
+      }
+      
+      // Validate password
+      if (password.length < 6) {
+        document.getElementById('registerPasswordError').style.display = 'block';
+        document.getElementById('registerPassword').classList.add('input-error');
+        isRegisterValid = false;
+      }
+      
+      // Validate password match
+      if (password !== confirm) {
+        document.getElementById('registerConfirmError').style.display = 'block';
+        document.getElementById('registerConfirm').classList.add('input-error');
+        isRegisterValid = false;
+      }
+      
+      if (isRegisterValid) {
+        // Here you would typically send data to server
+        alert('Registration successful! (This is a demo)');
+        authModal.classList.remove('active');
+        document.body.style.overflow = '';
+        
+        // Switch to login form after successful registration
+        loginForm.style.display = 'flex';
+        registerForm.style.display = 'none';
+      }
+    });
+
+    // ===== MUSIC PLAYER FUNCTIONALITY =====
+    const audio = document.getElementById("audio");
+    const progressBar = document.getElementById("progressBar");
+    const currentTimeElem = document.getElementById("currentTime");
+    const durationElem = document.getElementById("duration");
+    const playBtn = document.getElementById("playBtn");
+    const songTitle = document.getElementById("songTitle");
+    const artist = document.getElementById("artist");
+    const coverArt = document.getElementById("coverArt");
+    const allSongsContainer = document.getElementById("allSongsContainer");
+    const volumeControl = document.getElementById("volumeControl");
+
+    // Full player elements
+    const fullPlayerOverlay = document.getElementById("fullPlayerOverlay");
+    const fullPlayerCoverArt = document.getElementById("fullPlayerCoverArt");
+    const fullPlayerSongTitle = document.getElementById("fullPlayerSongTitle");
+    const fullPlayerArtist = document.getElementById("fullPlayerArtist");
+    const fullPlayBtn = document.getElementById("fullPlayBtn");
+    const fullPlayerProgressBar = document.getElementById("fullPlayerProgressBar");
+    const fullCurrentTime = document.getElementById("fullCurrentTime");
+    const fullDuration = document.getElementById("fullDuration");
+    const fullPlayerVolumeControl = document.getElementById("fullPlayerVolumeControl");
+    const closeFullPlayerBtn = document.getElementById("closeFullPlayerBtn");
+
+    // Format seconds to M:SS
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+      return `${mins}:${secs}`;
+    }
+
+    // Songs data
+    const placeholderCover = "soniktune logo.png";
+    const songs = [
+      { 
+        title: "Kadosh", 
+        artist: "Joe Mettle", 
+        src: "kadosh.mp3", 
+        cover: "Copy-of-MixtapeAlbum-Cover-Art-1024x1024.jpg" 
+      },
+      { 
+        title: "Shona Phansi Mix", 
+        artist: "Nostalgic", 
+        src: "Shona_Phansi__Nostalgic_Mix_(256k).mp3", 
+        cover: "AlbumCovers_Blonde-1200x1200.jpg" 
+      },
+      { 
+        title: "Summertime", 
+        artist: "Billy Preston", 
+        src: "Billy Preston - Summertime.mp3", 
+        cover: "wp5215885.jpg" 
+      },
+      { 
+        title: "Everyday with Jesus", 
+        artist: "MaKhumalo", 
+        src: "Everyday with Jesus.mp3", 
+        cover: "" 
+      },
+      { 
+        title: "You can't beat God's giving", 
+        artist: "Billy Preston", 
+        src: "Billy Preston - You Can_t Beat God Giving (Live) [Official Video].mp3", 
+        cover: "1600w-2aE_LYxWtEI.jpg" 
+      },
+      { 
+        title: "Special", 
+        artist: "Agent Snypa", 
+        src: "Agent Snypa Special.mp3", 
+        cover: "" 
+      },
+      { 
+        title: "Christ is on the way", 
+        artist: "Tru South", 
+        src: "Tru_South_&_Christian_K___Christ_Is_On_The_Way.mp3", 
+        cover: "" 
+      }
+    ];
+
+    let currentSongIndex = 0;
+    let isPlaying = false;
+    let lastVolume = 0.5; // Remember last volume for mute toggle
+
+    // Load a song by index and update both players
+    function loadSong(index) {
+      // Show loading state
+      coverArt.classList.add('loading');
+      fullPlayerCoverArt.classList.add('loading');
+      
+      currentSongIndex = index;
+      const song = songs[index];
+      
+      // Set audio source
+      audio.src = song.src;
+      
+      // Update mini player
+      songTitle.textContent = song.title;
+      artist.textContent = song.artist;
+      coverArt.src = song.cover || placeholderCover;
+      coverArt.alt = `${song.title} cover art`;
+      
+      // Update full player
+      fullPlayerCoverArt.src = song.cover || placeholderCover;
+      fullPlayerCoverArt.alt = `${song.title} cover art`;
+      fullPlayerSongTitle.textContent = song.title;
+      fullPlayerArtist.textContent = song.artist;
+      
+      // Remove loading state when cover art loads
+      coverArt.onload = () => {
+        coverArt.classList.remove('loading');
+        fullPlayerCoverArt.classList.remove('loading');
+      };
+      
+      // Fallback if cover fails to load
+      coverArt.onerror = () => {
+        coverArt.src = placeholderCover;
+        coverArt.classList.remove('loading');
+        fullPlayerCoverArt.src = placeholderCover;
+        fullPlayerCoverArt.classList.remove('loading');
+      };
+      
+      // Play automatically if player was playing
+      if (isPlaying) {
+        audio.play()
+          .then(() => {
+            playBtn.textContent = "⏸";
+            fullPlayBtn.textContent = "⏸";
+          })
+          .catch(error => {
+            console.error("Playback failed:", error);
+            alert("Playback failed. Please check your audio files.");
+          });
+      }
+    }
+
+    // Play / Pause toggle
+    function togglePlay(event) {
+      if (event) event.stopPropagation();
+      
+      if (audio.paused) {
+        audio.play()
+          .then(() => {
+            isPlaying = true;
+            playBtn.textContent = "⏸";
+            fullPlayBtn.textContent = "⏸";
+          })
+          .catch(error => {
+            console.error("Playback failed:", error);
+            alert("Could not play the song. The audio file may be missing or corrupted.");
+          });
+      } else {
+        audio.pause();
+        isPlaying = false;
+        playBtn.textContent = "▶";
+        fullPlayBtn.textContent = "▶";
+      }
+    }
+
+    // Play next song
+    function nextSong(event) {
+      if (event) event.stopPropagation();
+      currentSongIndex = (currentSongIndex + 1) % songs.length;
+      loadSong(currentSongIndex);
+      if (isPlaying) {
+        audio.play()
+          .catch(error => console.error("Playback failed:", error));
+      }
+    }
+
+    // Play previous song
+    function prevSong(event) {
+      if (event) event.stopPropagation();
+      // If song is more than 3 seconds in, restart it instead
+      if (audio.currentTime > 3) {
+        audio.currentTime = 0;
+      } else {
+        currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+        loadSong(currentSongIndex);
+        if (isPlaying) {
+          audio.play()
+            .catch(error => console.error("Playback failed:", error));
+        }
+      }
+    }
+
+    // Toggle mute when clicking volume slider
+    function toggleMute() {
+      if (audio.volume > 0) {
+        lastVolume = audio.volume;
+        audio.volume = 0;
+        volumeControl.value = 0;
+        fullPlayerVolumeControl.value = 0;
+      } else {
+        audio.volume = lastVolume;
+        volumeControl.value = lastVolume;
+        fullPlayerVolumeControl.value = lastVolume;
+      }
+    }
+
+    // Populate song list in the UI
+    function populateSongList() {
+      allSongsContainer.innerHTML = ''; // Clear existing songs
+      
+      songs.forEach((song, index) => {
+        const card = document.createElement("div");
+        card.classList.add("song-card");
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Play ${song.title} by ${song.artist}`);
+        card.tabIndex = 0;
+        
+        card.innerHTML = `
+          <img src="${song.cover || placeholderCover}" alt="${song.title} cover" />
+          <div class="song-title">${song.title}</div>
+          <div class="song-artist">${song.artist}</div>
+        `;
+        
+        // Play song when clicked
+        card.addEventListener("click", () => {
+          loadSong(index);
+          isPlaying = true;
+          audio.play()
+            .then(() => {
+              playBtn.textContent = "⏸";
+              fullPlayBtn.textContent = "⏸";
+            })
+            .catch(error => {
+              console.error("Playback failed:", error);
+              alert("Could not play the song. The audio file may be missing.");
+            });
+        });
+        
+        // Also play on Enter key for accessibility
+        card.addEventListener("keydown", (e) => {
+          if (e.key === 'Enter') {
+            loadSong(index);
+            isPlaying = true;
+            audio.play()
+              .then(() => {
+                playBtn.textContent = "⏸";
+                fullPlayBtn.textContent = "⏸";
+              })
+              .catch(error => console.error("Playback failed:", error));
+          }
+        });
+        
+        allSongsContainer.appendChild(card);
+      });
+    }
+
+    // Initialize the player
+    function initPlayer() {
+      // Load first song
+      loadSong(currentSongIndex);
+      
+      // Set initial volume
+      audio.volume = volumeControl.value;
+      
+      // Populate song list
+      populateSongList();
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        // Space to play/pause (when not focused on form elements)
+        if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          togglePlay();
+        }
+        
+        // Right arrow for next song
+        if (e.code === 'ArrowRight') {
+          nextSong();
+        }
+        
+        // Left arrow for previous song
+        if (e.code === 'ArrowLeft') {
+          prevSong();
+        }
+      });
+    }
+
+    // Sync progress bars and time displays for both players
+    audio.addEventListener("loadedmetadata", () => {
+      durationElem.textContent = formatTime(audio.duration);
+      fullDuration.textContent = formatTime(audio.duration);
+      progressBar.max = 100;
+      fullPlayerProgressBar.max = 100;
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      currentTimeElem.textContent = formatTime(audio.currentTime);
+      fullCurrentTime.textContent = formatTime(audio.currentTime);
+      if (audio.duration) {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        progressBar.value = progress;
+        fullPlayerProgressBar.value = progress;
+      }
+    });
+
+    // When song ends, play next one
+    audio.addEventListener("ended", nextSong);
+
+    // Seek audio when progress bars change
+    progressBar.addEventListener("input", () => {
+      if (audio.duration) {
+        audio.currentTime = (progressBar.value / 100) * audio.duration;
+      }
+    });
+    
+    fullPlayerProgressBar.addEventListener("input", () => {
+      if (audio.duration) {
+        audio.currentTime = (fullPlayerProgressBar.value / 100) * audio.duration;
+      }
+    });
+
+    // Volume controls sync
+    volumeControl.addEventListener("input", () => {
+      audio.volume = volumeControl.value;
+      fullPlayerVolumeControl.value = volumeControl.value;
+      lastVolume = audio.volume; // Update last volume for mute toggle
+    });
+    
+    fullPlayerVolumeControl.addEventListener("input", () => {
+      audio.volume = fullPlayerVolumeControl.value;
+      volumeControl.value = fullPlayerVolumeControl.value;
+      lastVolume = audio.volume; // Update last volume for mute toggle
+    });
+    
+    // Toggle mute when volume slider is clicked
+    volumeControl.addEventListener('click', (e) => {
+      if (e.target === volumeControl) {
+        increaseVolume();
+      }
+    });
+    
+    fullPlayerVolumeControl.addEventListener('click', (e) => {
+      if (e.target === fullPlayerVolumeControl) {
+        increaseVolume();
+      }
+    });
+
+    // Clicking the mini player opens full player overlay
+    const player = document.getElementById("player");
+    player.addEventListener("click", () => {
+      fullPlayerOverlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+    });
+
+    // Close full player overlay
+    closeFullPlayerBtn.addEventListener("click", () => {
+      fullPlayerOverlay.classList.remove("active");
+      document.body.style.overflow = "";
+    });
+
+    // Prevent clicks on controls inside mini player from opening full player
+    const controls = document.querySelectorAll("#player .controls button, #player input");
+    controls.forEach(btn => btn.addEventListener("click", e => e.stopPropagation()));
+
+    // Also stop propagation for full player controls buttons (prev, play, next)
+    const fullControlsBtns = document.querySelectorAll("#fullPlayerControls button, #fullPlayerContent input");
+    fullControlsBtns.forEach(btn => btn.addEventListener("click", e => e.stopPropagation()));
+
+    // Initialize the player when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initPlayer);
+  </script>
+</body>
+</html>
