@@ -635,6 +635,20 @@
       100% { transform: translateX(100%); }
     }
 
+    /* ===== SEARCH RESULTS ===== */
+    .search-results-header {
+      color: #fff;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .no-results {
+      color: #b3b3b3;
+      text-align: center;
+      margin-top: 50px;
+      font-size: 1.2rem;
+    }
+
     /* ===== RESPONSIVE DESIGN ===== */
     @media (max-width: 768px) {
       .app {
@@ -769,9 +783,9 @@
     <aside class="sidebar">
       <div class="logo">SonikTunez</div>
       <nav>
-        <a href="#" class="active">Home</a>
-        <a href="#">Search</a>
-        <a href="#">Your Library</a>
+        <a href="#" class="active" id="homeLink">Home</a>
+        <a href="#" id="searchLink">Search</a>
+        <a href="#" id="libraryLink">Your Library</a>
       </nav>
     </aside>
 
@@ -785,8 +799,23 @@
       </header>
 
       <div class="content">
-        <div class="song-list" id="allSongsContainer">
-          <!-- Songs populated by JS -->
+        <div id="homeContent">
+          <div class="song-list" id="allSongsContainer">
+            <!-- Songs populated by JS -->
+          </div>
+        </div>
+        <div id="searchContent" style="display: none;">
+          <h2 class="search-results-header">Search Results</h2>
+          <div class="song-list" id="searchResultsContainer">
+            <!-- Search results will appear here -->
+          </div>
+          <div class="no-results" id="noResultsMessage" style="display: none;">
+            No results found. Try a different search term.
+          </div>
+        </div>
+        <div id="libraryContent" style="display: none;">
+          <h2>Your Library</h2>
+          <p>Your saved songs and playlists will appear here.</p>
         </div>
       </div>
     </div>
@@ -1063,6 +1092,17 @@
     const fullPlayerVolumeControl = document.getElementById("fullPlayerVolumeControl");
     const closeFullPlayerBtn = document.getElementById("closeFullPlayerBtn");
 
+    // Navigation elements
+    const homeLink = document.getElementById("homeLink");
+    const searchLink = document.getElementById("searchLink");
+    const libraryLink = document.getElementById("libraryLink");
+    const homeContent = document.getElementById("homeContent");
+    const searchContent = document.getElementById("searchContent");
+    const libraryContent = document.getElementById("libraryContent");
+    const searchBar = document.getElementById("searchBar");
+    const searchResultsContainer = document.getElementById("searchResultsContainer");
+    const noResultsMessage = document.getElementById("noResultsMessage");
+
     // Format seconds to M:SS
     function formatTime(seconds) {
       const mins = Math.floor(seconds / 60);
@@ -1237,25 +1277,38 @@
       }
     }
 
-    // Populate song list in the UI
-    function populateSongList() {
-      allSongsContainer.innerHTML = ''; // Clear existing songs
+    // Create a song card element
+    function createSongCard(song, index) {
+      const card = document.createElement("div");
+      card.classList.add("song-card");
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `Play ${song.title} by ${song.artist}`);
+      card.tabIndex = 0;
       
-      songs.forEach((song, index) => {
-        const card = document.createElement("div");
-        card.classList.add("song-card");
-        card.setAttribute('role', 'button');
-        card.setAttribute('aria-label', `Play ${song.title} by ${song.artist}`);
-        card.tabIndex = 0;
-        
-        card.innerHTML = `
-          <img src="${song.cover || placeholderCover}" alt="${song.title} cover" />
-          <div class="song-title">${song.title}</div>
-          <div class="song-artist">${song.artist}</div>
-        `;
-        
-        // Play song when clicked
-        card.addEventListener("click", () => {
+      card.innerHTML = `
+        <img src="${song.cover || placeholderCover}" alt="${song.title} cover" />
+        <div class="song-title">${song.title}</div>
+        <div class="song-artist">${song.artist}</div>
+      `;
+      
+      // Play song when clicked
+      card.addEventListener("click", () => {
+        loadSong(index);
+        isPlaying = true;
+        audio.play()
+          .then(() => {
+            playBtn.textContent = "⏸";
+            fullPlayBtn.textContent = "⏸";
+          })
+          .catch(error => {
+            console.error("Playback failed:", error);
+            alert("Could not play the song. The audio file may be missing.");
+          });
+      });
+      
+      // Also play on Enter key for accessibility
+      card.addEventListener("keydown", (e) => {
+        if (e.key === 'Enter') {
           loadSong(index);
           isPlaying = true;
           audio.play()
@@ -1263,28 +1316,44 @@
               playBtn.textContent = "⏸";
               fullPlayBtn.textContent = "⏸";
             })
-            .catch(error => {
-              console.error("Playback failed:", error);
-              alert("Could not play the song. The audio file may be missing.");
-            });
-        });
-        
-        // Also play on Enter key for accessibility
-        card.addEventListener("keydown", (e) => {
-          if (e.key === 'Enter') {
-            loadSong(index);
-            isPlaying = true;
-            audio.play()
-              .then(() => {
-                playBtn.textContent = "⏸";
-                fullPlayBtn.textContent = "⏸";
-              })
-              .catch(error => console.error("Playback failed:", error));
-          }
-        });
-        
+            .catch(error => console.error("Playback failed:", error));
+        }
+      });
+      
+      return card;
+    }
+
+    // Populate song list in the UI
+    function populateSongList() {
+      allSongsContainer.innerHTML = ''; // Clear existing songs
+      
+      songs.forEach((song, index) => {
+        const card = createSongCard(song, index);
         allSongsContainer.appendChild(card);
       });
+    }
+
+    // Search functionality
+    function performSearch(searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      const results = songs.filter(song => 
+        song.title.toLowerCase().includes(lowerSearchTerm) || 
+        song.artist.toLowerCase().includes(lowerSearchTerm)
+      );
+      
+      searchResultsContainer.innerHTML = ''; // Clear previous results
+      
+      if (results.length > 0) {
+        noResultsMessage.style.display = 'none';
+        results.forEach((song, index) => {
+          // Find the original index of the song in the songs array
+          const originalIndex = songs.findIndex(s => s.title === song.title && s.artist === song.artist);
+          const card = createSongCard(song, originalIndex);
+          searchResultsContainer.appendChild(card);
+        });
+      } else {
+        noResultsMessage.style.display = 'block';
+      }
     }
 
     // Initialize the player
@@ -1297,6 +1366,50 @@
       
       // Populate song list
       populateSongList();
+      
+      // Navigation functionality
+      homeLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        homeContent.style.display = 'block';
+        searchContent.style.display = 'none';
+        libraryContent.style.display = 'none';
+        homeLink.classList.add('active');
+        searchLink.classList.remove('active');
+        libraryLink.classList.remove('active');
+      });
+      
+      searchLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        homeContent.style.display = 'none';
+        searchContent.style.display = 'block';
+        libraryContent.style.display = 'none';
+        homeLink.classList.remove('active');
+        searchLink.classList.add('active');
+        libraryLink.classList.remove('active');
+        searchBar.focus();
+      });
+      
+      libraryLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        homeContent.style.display = 'none';
+        searchContent.style.display = 'none';
+        libraryContent.style.display = 'block';
+        homeLink.classList.remove('active');
+        searchLink.classList.remove('active');
+        libraryLink.classList.add('active');
+      });
+      
+      // Search functionality
+      searchBar.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        if (searchTerm.length > 0) {
+          performSearch(searchTerm);
+        } else {
+          // If search is empty, show all songs
+          searchResultsContainer.innerHTML = '';
+          noResultsMessage.style.display = 'none';
+        }
+      });
       
       // Keyboard shortcuts
       document.addEventListener('keydown', (e) => {
@@ -1368,13 +1481,13 @@
     // Toggle mute when volume slider is clicked
     volumeControl.addEventListener('click', (e) => {
       if (e.target === volumeControl) {
-        increaseVolume();
+        toggleMute();
       }
     });
     
     fullPlayerVolumeControl.addEventListener('click', (e) => {
       if (e.target === fullPlayerVolumeControl) {
-        increaseVolume();
+        toggleMute();
       }
     });
 
