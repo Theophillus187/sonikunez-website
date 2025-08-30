@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SonikTunez - Music App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="90" height="90" rx="15" ry="15" fill="#1db954" />
+      <path d="M55 25 Q50 30 50 40 Q50 48 40 48 Q35 48 32 51 Q28 55 30 60 Q32 65 38 66 Q44 67 47 63 Q50 60 50 55 Q50 50 55 48 Q60 45 60 40 Q60 35 65 30 L55 25 Z" fill="white" />
+    </svg>
+    <aside class="sidebar">
+      <div class="logo">SonikTunez</div>
+
+      <nav>
+        <a href="#" class="active" id="nav-home">Home</a>
+        <a href="#" id="nav-search">Search</a>
+        <a href="#" id="nav-library">Your Library</a>
+        <a href="#" id="nav-settings">Settings</a>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <header>
+        <input type="text" id="searchBar" placeholder="Search for songs, artists..." aria-label="Search songs" />
+        <div class="auth-buttons">
+          <button id="openLoginBtn">Login</button>
+          <button id="openRegisterBtn">Sign Up</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="song-list" id="allSongsContainer">
+          <!-- Songs populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini player fixed bottom -->
+  <section id="player" aria-label="Music player" title="Click to open full player">
+    <img id="coverArt" src="https://via.placeholder.com/60" alt="Album Cover" />
+    <div id="songInfo">
+      <div id="songTitle">Song Title</div>
+      <div id="artist">Artist Name</div>
+    </div>
+    <div class="controls">
+      <button onclick="prevSong(event)" aria-label="Previous song">⏮</button>
+      <button onclick="togglePlay(event)" id="playBtn" aria-label="Play/pause">▶</button>
+      <button onclick="nextSong(event)" aria-label="Next song">⏭</button>
+    </div>
+    <input type="range" id="progressBar" min="0" max="100" value="0" aria-label="Song progress" />
+    <div id="timeDisplay">
+      <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+    </div>
+    <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.5" aria-label="Volume control" />
+    <audio id="audio" aria-hidden="true"></audio>
+  </section>
+
+  <!-- Full page player overlay -->
+  <div id="fullPlayerOverlay" role="dialog" aria-modal="true" aria-label="Full Music Player">
+    <div id="fullPlayerContent">
+      <button id="closeFullPlayerBtn" aria-label="Close full player">✕</button>
+      <img id="fullPlayerCoverArt" src="https://via.placeholder.com/300" alt="Album Cover" />
+      <div id="fullPlayerSongTitle">Song Title</div>
+      <div id="fullPlayerArtist">Artist Name</div>
+      <div id="fullPlayerControls">
+        <button onclick="prevSong()" aria-label="Previous song">⏮</button>
+        <button onclick="togglePlay()" id="fullPlayBtn" aria-label="Play/pause">▶</button>
+        <button onclick="nextSong()" aria-label="Next song">⏭</button>
+      </div>
+      <input type="range" id="fullPlayerProgressBar" min="0" max="100" value="0" aria-label="Song progress" />
+      <div id="fullPlayerTimeDisplay">
+        <span id="fullCurrentTime">0:00</span> / <span id="fullDuration">0:00</span>
+      </div>
+      <input type="range" id="fullPlayerVolumeControl" min="0" max="1" step="0.01" value="0.5" aria-label="Volume control" />
+    </div>
+  </div>
+  
+  <!-- AUTH MODAL -->
+  <div id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div id="authModalContent">
+      <button class="closeBtn" aria-label="Close authentication modal">✕</button>
+
+      <!-- LOGIN FORM (shown by default) -->
+      <form id="loginForm">
+        <h2 id="authTitle">Login</h2>
+
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required placeholder="Enter your email" />
+        <div class="form-error" id="loginEmailError">Please enter a valid email</div>
+
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required placeholder="Enter your password" />
+        <div class="form-error" id="loginPasswordError">Password must be at least 6 characters</div>
+
+        <button type="submit" class="submitBtn">Login</button>
+
+        <div class="toggle-link">
+          Don't have an account? <a href="#" id="showRegister">Sign Up</a>
+        </div>
+      </form>
+
+      <!-- REGISTER FORM (hidden by default) -->
+      <form id="registerForm" style="display: none;">
+        <h2>Sign Up</h2>
+
+        <label for="registerName">Name</label>
+        <input type="text" id="registerName" required placeholder="Enter your name" />
+        <div class="form-error" id="registerNameError">Please enter your name</div>
+
+        <label for="registerEmail">Email</label>
+        <input type="email" id="registerEmail" required placeholder="Enter your email" />
+        <div class="form-error" id="registerEmailError">Please enter a valid email</div>
+
+        <label for="registerPassword">Password</label>
+        <input type="password" id="registerPassword" required placeholder="Enter your password" />
+        <div class="form-error" id="registerPasswordError">Password must be at least 6 characters</div>
+
+        <label for="registerConfirm">Confirm Password</label>
+        <input type="password" id="registerConfirm" required placeholder="Confirm your password" />
+        <div class="form-error" id="registerConfirmError">Passwords do not match</div>
+
+        <button type="submit" class="submitBtn">Sign Up</button>
+
+        <div class="toggle-link">
+          Already have an account? <a href="#" id="showLogin">Login</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div id="settingsModalContent">
+      <button class="closeBtn" aria-label="Close settings modal">✕</button>
+      <h2 id="settingsTitle">Settings</h2>
+      
+      <div class="settings-section">
+        <h3>Appearance</h3>
+        <button id="toggleThemeBtn" class="theme-toggle-btn">Switch to Dark Mode</button>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Audio Quality</h3>
+        <select id="audioQuality">
+          <option value="low">Low (128kbps)</option>
+          <option value="medium" selected>Medium (256kbps)</option>
+          <option value="high">High (320kbps)</option>
+        </select>
+      </div>
+      
+      <div class="settings-section">
+        <h3>About</h3>
+        <p>SonikTunez v1.0.0</p>
+        <p>Your personal music streaming app</p>
+      </div>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
